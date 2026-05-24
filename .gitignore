@@ -1,0 +1,14 @@
+# 의존성
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 에디터
+.vscode/
+.idea/
+
+# 로컬 환경 (키가 담긴 파일을 실수로 커밋하지 않도록)
+.env
+*.local
