@@ -17,6 +17,15 @@ LaTeX 수식, 표, 코드 블록, 이미지, 인용구, 토글 등 노션 서식
 
 ---
 
+## Overview
+
+<p align="center">
+  <img src="image.png" width="850">
+</p>
+
+---
+
+
 ## 시작하기
 
 ### 1. 저장소 클론 및 설치
