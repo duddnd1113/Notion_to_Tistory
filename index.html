@@ -24,53 +24,51 @@
 
   <main class="main">
 
-    <!-- 설정 패널 -->
     <aside class="sidebar">
 
-      <section class="card" id="section-api">
-        <h2 class="card-title"><span class="step-num">01</span> API 키 설정</h2>
-        <div class="field">
-          <label for="anthropicKey">Anthropic API Key</label>
-          <div class="input-with-toggle">
-            <input type="password" id="anthropicKey" placeholder="sk-ant-..." autocomplete="off">
-            <button class="toggle-vis" onclick="toggleVis('anthropicKey')" title="보기/숨기기" aria-label="비밀번호 표시 전환">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
-        </div>
+      <!-- 01 Notion 연결 -->
+      <section class="card">
+        <h2 class="card-title"><span class="step-num">01</span> Notion 연결</h2>
+        <p class="help-text" style="margin-bottom:10px">터미널에서 <code>npm start</code> 실행 후 사용하세요.</p>
         <div class="field">
           <label for="notionToken">Notion Integration Token</label>
           <div class="input-with-toggle">
             <input type="password" id="notionToken" placeholder="secret_..." autocomplete="off">
-            <button class="toggle-vis" onclick="toggleVis('notionToken')" title="보기/숨기기" aria-label="비밀번호 표시 전환">
+            <button class="toggle-vis" onclick="toggleVis('notionToken')" title="보기/숨기기">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
             </button>
           </div>
         </div>
         <button class="btn-save" onclick="saveKeys()">저장</button>
-        <p class="help-text">키는 브라우저 로컬에만 저장되며 외부로 전송되지 않습니다.</p>
+        <p class="help-text">토큰은 브라우저 로컬에만 저장됩니다.</p>
       </section>
 
-      <section class="card" id="section-search">
-        <h2 class="card-title"><span class="step-num">02</span> 페이지 검색</h2>
+      <!-- 02 페이지 URL -->
+      <section class="card">
+        <h2 class="card-title"><span class="step-num">02</span> 노션 페이지 URL</h2>
         <div class="field">
-          <label for="searchInput">논문 제목 또는 키워드</label>
-          <input type="text" id="searchInput" placeholder="예: OOD, attention, diffusion..." onkeydown="if(event.key==='Enter') searchPages()">
+          <label for="notionUrl">노션 페이지 링크 붙여넣기</label>
+          <input type="text" id="notionUrl"
+            placeholder="https://www.notion.so/..."
+            oninput="onUrlInput(this.value)"
+            onpaste="setTimeout(()=>onUrlInput(this.value),0)">
         </div>
-        <button class="btn-primary" onclick="searchPages()" id="searchBtn">검색</button>
-        <div id="searchStatus" class="status hidden"></div>
-        <div id="pageList" class="page-list hidden"></div>
+        <div id="urlStatus" class="status hidden"></div>
       </section>
 
-      <section class="card" id="section-options">
+      <!-- 03 변환 옵션 -->
+      <section class="card">
         <h2 class="card-title"><span class="step-num">03</span> 변환 옵션</h2>
         <div class="options-grid">
-          <label class="opt-label"><input type="checkbox" id="optKatex" checked> KaTeX 수식 렌더링</label>
+          <label class="opt-label"><input type="checkbox" id="optKatex" checked> KaTeX 수식</label>
           <label class="opt-label"><input type="checkbox" id="optImages" checked> 이미지 포함</label>
-          <label class="opt-label"><input type="checkbox" id="optMeta"> 논문 정보 헤더</label>
-          <label class="opt-label"><input type="checkbox" id="optToc"> 목차(TOC) 생성</label>
+          <label class="opt-label"><input type="checkbox" id="optMeta"> 페이지 정보</label>
+          <label class="opt-label"><input type="checkbox" id="optToc"> 목차(TOC)</label>
         </div>
-        <button class="btn-primary" onclick="convertPage()" id="convertBtn" disabled>변환하기</button>
+        <button class="btn-primary" onclick="convertPage()" id="convertBtn" disabled>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:5px;vertical-align:-2px"><polyline points="13 2 13 9 20 9"/><path d="M3 22V2h10l5 5v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg>
+          변환하기
+        </button>
         <div id="convertStatus" class="status hidden"></div>
       </section>
 
@@ -86,7 +84,7 @@
         <div class="preview-actions">
           <span id="charCount" class="char-count"></span>
           <button class="btn-copy" id="copyBtn" onclick="copyToClipboard()" disabled>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
             HTML 복사
           </button>
         </div>
@@ -96,17 +94,17 @@
         <div id="preview-rendered" class="preview-content">
           <div class="empty-state">
             <div class="empty-icon">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             </div>
-            <p>왼쪽에서 검색 후 변환하면<br>여기에 미리보기가 나타납니다</p>
+            <p>노션 페이지 URL을 붙여넣고<br>변환하기를 누르세요</p>
           </div>
         </div>
         <div id="preview-html" class="preview-content code-view hidden"></div>
       </div>
 
       <div class="tistory-guide hidden" id="tistoryGuide">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        티스토리 에디터 우측 상단 <strong>&lt;/&gt; HTML</strong> 버튼 클릭 → 붙여넣기 → 미리보기로 전환
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        티스토리 에디터 우측 상단 <strong>&lt;/&gt; HTML</strong> 버튼 클릭 → 붙여넣기
       </div>
     </section>
 
