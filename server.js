@@ -83,6 +83,33 @@ function richText(rt) {
       if (ann.italic)        text = `<i>${text}</i>`;
       if (ann.strikethrough) text = `<s>${text}</s>`;
       if (ann.underline)     text = `<u>${text}</u>`;
+
+      // 노션 형광펜(배경색) 및 글자색 처리
+      if (ann.color && ann.color !== 'default') {
+        const colorMap = {
+          yellow_background:  '#fff9c4',
+          green_background:   '#d4edda',
+          blue_background:    '#d0e8ff',
+          red_background:     '#ffd6d6',
+          orange_background:  '#ffe0b2',
+          purple_background:  '#ead5f9',
+          pink_background:    '#fce4ec',
+          gray_background:    '#e0e0e0',
+          brown_background:   '#efebe9',
+        };
+        if (ann.color.endsWith('_background')) {
+          const bg = colorMap[ann.color] || '#ffff00';
+          text = `<span style="background-color:${bg};">${text}</span>`;
+        } else {
+          const fgMap = {
+            yellow: '#f5c400', green: '#0f7b0f', blue: '#0055cc',
+            red: '#cc0000', orange: '#d9730d', purple: '#6940a5',
+            pink: '#e03e7c', gray: '#9b9b9b', brown: '#64473a',
+          };
+          const fg = fgMap[ann.color] || ann.color;
+          text = `<span style="color:${fg};">${text}</span>`;
+        }
+      }
     }
 
     const href = span.href || span.text?.link?.url;
@@ -110,13 +137,21 @@ function blocksToHtml(blocks, opts = {}) {
 
     // 연속 bulleted_list_item
     if (type === 'bulleted_list_item') {
-      html += `<ul style="list-style-type: disc;" data-ke-list-type="disc">`;
+      html += `<ul style="list-style-type:disc;" data-ke-list-type="disc">`;
       while (i < blocks.length && blocks[i].type === 'bulleted_list_item') {
         const b = blocks[i];
         const bd = b.bulleted_list_item || {};
         const inner = richText(bd.rich_text);
-        const nested = b._children ? blocksToHtml(b._children, opts) : '';
-        html += `<li>${inner}${nested}</li>`;
+        // 중첩 리스트: circle bullet + 색상 구분
+        const nested = b._children ? `<ul style="list-style-type:circle;padding-left:1.5em;margin:0.2em 0;color:#444;font-size:15px;">${
+          b._children.filter(c => c.type === 'bulleted_list_item').map(c => {
+            const cd = c.bulleted_list_item || {};
+            const cInner = richText(cd.rich_text);
+            const cNested = c._children ? blocksToHtml(c._children, opts) : '';
+            return `<li style="margin:0.15em 0;">${cInner}${cNested}</li>`;
+          }).join('')
+        }</ul>${blocksToHtml(b._children.filter(c => c.type !== 'bulleted_list_item'), opts)}` : '';
+        html += `<li style="margin:0.3em 0;">${inner}${nested}</li>`;
         i++;
       }
       html += '</ul>';
@@ -125,13 +160,21 @@ function blocksToHtml(blocks, opts = {}) {
 
     // 연속 numbered_list_item
     if (type === 'numbered_list_item') {
-      html += `<ol style="list-style-type: decimal;" data-ke-list-type="decimal">`;
+      html += `<ol style="list-style-type:decimal;" data-ke-list-type="decimal">`;
       while (i < blocks.length && blocks[i].type === 'numbered_list_item') {
         const b = blocks[i];
         const bd = b.numbered_list_item || {};
         const inner = richText(bd.rich_text);
-        const nested = b._children ? blocksToHtml(b._children, opts) : '';
-        html += `<li>${inner}${nested}</li>`;
+        // 중첩 리스트: lower-alpha + 색상 구분
+        const nested = b._children ? `<ol style="list-style-type:lower-alpha;padding-left:1.5em;margin:0.2em 0;color:#444;font-size:15px;">${
+          b._children.filter(c => c.type === 'numbered_list_item').map(c => {
+            const cd = c.numbered_list_item || {};
+            const cInner = richText(cd.rich_text);
+            const cNested = c._children ? blocksToHtml(c._children, opts) : '';
+            return `<li style="margin:0.15em 0;">${cInner}${cNested}</li>`;
+          }).join('')
+        }</ol>${blocksToHtml(b._children.filter(c => c.type !== 'numbered_list_item'), opts)}` : '';
+        html += `<li style="margin:0.3em 0;">${inner}${nested}</li>`;
         i++;
       }
       html += '</ol>';
@@ -145,32 +188,43 @@ function blocksToHtml(blocks, opts = {}) {
         break;
       }
       case 'heading_1': {
-        // 노션 # → Tistory h2 size26
         const text = richText(data.rich_text);
-        html += `<h2 data-ke-size="size26"><span style="font-family: ${HEADING_FONT};"><b>${text}</b></span></h2>`;
+        html += `<h2 data-ke-size="size26" style="padding-left:0.6em;border-left:4px solid #003876;"><span style="font-family: ${HEADING_FONT};"><b>${text}</b></span></h2>`;
         break;
       }
       case 'heading_2': {
-        // 노션 ## → Tistory h3 size23
         const text = richText(data.rich_text);
-        html += `<h3 data-ke-size="size23"><span style="font-family: ${HEADING_FONT};"><b>${text}</b></span></h3>`;
+        html += `<h3 data-ke-size="size23" style="padding-left:0.5em;border-left:3px solid #003876;"><span style="font-family: ${HEADING_FONT};"><b>${text}</b></span></h3>`;
         break;
       }
       case 'heading_3': {
-        // 노션 ### → Tistory h4 size20
         const text = richText(data.rich_text);
         html += `<h4 data-ke-size="size20"><span style="font-family: ${HEADING_FONT};"><b>${text}</b></span></h4>`;
         break;
       }
       case 'quote': {
         const text = richText(data.rich_text);
-        html += `<blockquote data-ke-style="style2"><p data-ke-size="size16">${text}</p></blockquote>`;
+        const children = block._children ? blocksToHtml(block._children, opts) : '';
+        html += `<blockquote data-ke-style="style2" style="margin:1em 0;padding:0.8em 1.2em;border-left:4px solid #aaa;background:#f9f9f9;color:#555;"><p data-ke-size="size16" style="margin:0 0 ${children ? '0.5em' : '0'};">${text}</p>${children}</blockquote>`;
         break;
       }
       case 'callout': {
-        const icon = data.icon?.emoji ? data.icon.emoji + ' ' : '';
+        const icon = data.icon?.emoji ? data.icon.emoji + ' ' : '💡 ';
         const text = richText(data.rich_text);
-        html += `<blockquote data-ke-style="style2"><p data-ke-size="size16">${icon}${text}</p></blockquote>`;
+        const children = block._children ? blocksToHtml(block._children, opts) : '';
+        // callout 블록 배경색 (노션 color 속성 반영)
+        const calloutColorMap = {
+          yellow_background: '#fffbe6', orange_background: '#fff3e0',
+          green_background:  '#f0faf0', blue_background:   '#eef4ff',
+          red_background:    '#fff0f0', purple_background: '#f5f0ff',
+          pink_background:   '#fff0f8', gray_background:   '#f5f5f5',
+          brown_background:  '#fdf6f0',
+          yellow: '#fffbe6', orange: '#fff3e0', green: '#f0faf0',
+          blue: '#eef4ff', red: '#fff0f0', purple: '#f5f0ff',
+          pink: '#fff0f8', gray: '#f5f5f5', brown: '#fdf6f0',
+        };
+        const bg = calloutColorMap[data.color] || '#eef4ff';
+        html += `<div style="display:flex;align-items:flex-start;gap:0.6em;background:${bg};border:1px solid #c8d8f0;border-radius:6px;padding:0.9em 1.1em;margin:1em 0;"><span style="font-size:1.2em;line-height:1.6;flex-shrink:0;">${icon}</span><div style="flex:1;"><p data-ke-size="size16" style="margin:0;">${text}</p>${children}</div></div>`;
         break;
       }
       case 'divider': {
