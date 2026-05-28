@@ -43,9 +43,33 @@
         <p class="help-text">토큰은 브라우저 로컬에만 저장됩니다.</p>
       </section>
 
-      <!-- 02 페이지 URL -->
+      <!-- 02 Cloudinary -->
       <section class="card">
-        <h2 class="card-title"><span class="step-num">02</span> 노션 페이지 URL</h2>
+        <h2 class="card-title"><span class="step-num">02</span> Cloudinary <span style="font-weight:400;font-size:12px;color:#888;">(이미지 자동 업로드 · 선택)</span></h2>
+        <div class="field">
+          <label for="cloudName">Cloud Name</label>
+          <input type="text" id="cloudName" placeholder="your-cloud-name" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="cloudApiKey">API Key</label>
+          <input type="text" id="cloudApiKey" placeholder="123456789012345" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="cloudApiSecret">API Secret</label>
+          <div class="input-with-toggle">
+            <input type="password" id="cloudApiSecret" placeholder="API Secret" autocomplete="off">
+            <button class="toggle-vis" onclick="toggleVis('cloudApiSecret')" title="보기/숨기기">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <button class="btn-save" onclick="saveCloudinary()">저장</button>
+        <p class="help-text">입력하면 변환 시 이미지를 Cloudinary에 자동 업로드합니다. 비워두면 Notion 원본 URL 사용.</p>
+      </section>
+
+      <!-- 03 페이지 URL -->
+      <section class="card">
+        <h2 class="card-title"><span class="step-num">03</span> 노션 페이지 URL</h2>
         <div class="field">
           <label for="notionUrl">노션 페이지 링크 붙여넣기</label>
           <input type="text" id="notionUrl"
@@ -56,9 +80,9 @@
         <div id="urlStatus" class="status hidden"></div>
       </section>
 
-      <!-- 03 변환 옵션 -->
+      <!-- 04 변환 옵션 -->
       <section class="card">
-        <h2 class="card-title"><span class="step-num">03</span> 변환 옵션</h2>
+        <h2 class="card-title"><span class="step-num">04</span> 변환 옵션</h2>
         <div class="options-grid">
           <label class="opt-label"><input type="checkbox" id="optKatex" checked> KaTeX 수식</label>
           <label class="opt-label"><input type="checkbox" id="optImages" checked> 이미지 포함</label>

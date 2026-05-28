@@ -4,11 +4,50 @@
    ============================================================ */
 
 const express = require('express');
+const crypto = require('crypto');
 const app = express();
 app.use(express.json());
 app.use(express.static(__dirname));
 
 const NOTION_API = 'https://api.notion.com/v1';
+
+/* ── Cloudinary 이미지 업로드 ── */
+async function uploadToCloudinary(imageUrl, cloudName, apiKey, apiSecret) {
+  const timestamp = Math.floor(Date.now() / 1000);
+  const toSign = `timestamp=${timestamp}${apiSecret}`;
+  const signature = crypto.createHash('sha1').update(toSign).digest('hex');
+
+  const body = new URLSearchParams();
+  body.append('file', imageUrl);
+  body.append('timestamp', String(timestamp));
+  body.append('api_key', apiKey);
+  body.append('signature', signature);
+
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+    method: 'POST',
+    body,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `Cloudinary 오류 (${res.status})`);
+  }
+  const data = await res.json();
+  return data.secure_url;
+}
+
+/* ── 블록 트리에서 이미지 URL 수집 ── */
+function collectImageUrls(blocks) {
+  const items = [];
+  for (const block of blocks) {
+    if (block.type === 'image') {
+      const d = block.image || {};
+      const url = d.type === 'external' ? d.external?.url : d.file?.url;
+      if (url) items.push(url);
+    }
+    if (block._children) items.push(...collectImageUrls(block._children));
+  }
+  return items;
+}
 const NOTION_VERSION = '2022-06-28';
 
 /* ── Notion API 공통 fetch ── */
@@ -254,8 +293,9 @@ function blocksToHtml(blocks, opts = {}) {
         if (opts.images === false) break;
         const url = data.type === 'external' ? data.external?.url : data.file?.url;
         if (!url) break;
+        const finalUrl = (opts.imageUrlMap && opts.imageUrlMap[url]) || url;
         const cap = data.caption ? richText(data.caption) : '';
-        html += `<p data-ke-size="size16" style="text-align:center;"><img src="${url}" style="max-width:100%;height:auto;" /></p>`;
+        html += `<p data-ke-size="size16" style="text-align:center;"><img src="${finalUrl}" style="max-width:100%;height:auto;" /></p>`;
         if (cap) html += `<p data-ke-size="size16" style="text-align:center;color:#666;font-size:13px;">${cap}</p>`;
         break;
       }
@@ -381,7 +421,7 @@ app.post('/api/convert', async (req, res) => {
   const token = req.headers['x-notion-token'];
   if (!token) return res.status(401).json({ error: 'x-notion-token 헤더가 필요합니다.' });
 
-  const { pageId, options = {} } = req.body;
+  const { pageId, options = {}, cloudinary } = req.body;
   if (!pageId) return res.status(400).json({ error: 'pageId가 필요합니다.' });
 
   try {
@@ -390,11 +430,28 @@ app.post('/api/convert', async (req, res) => {
       images: options.images !== false,
       meta:   !!options.meta,
       toc:    !!options.toc,
+      imageUrlMap: {},
     };
 
     // 블록 재귀 fetch
     _mathId = 0;
     const blocks = await fetchBlocks(token, pageId);
+
+    // Cloudinary 이미지 업로드 (credentials 있을 때만)
+    if (cloudinary?.cloudName && cloudinary?.apiKey && cloudinary?.apiSecret && opts.images !== false) {
+      const urls = [...new Set(collectImageUrls(blocks))];
+      let uploaded = 0;
+      for (const url of urls) {
+        try {
+          opts.imageUrlMap[url] = await uploadToCloudinary(url, cloudinary.cloudName, cloudinary.apiKey, cloudinary.apiSecret);
+          uploaded++;
+        } catch (e) {
+          console.error(`[Cloudinary] 업로드 실패 (${url}):`, e.message);
+        }
+      }
+      console.log(`[Cloudinary] ${uploaded}/${urls.length} 이미지 업로드 완료`);
+    }
+
     const bodyHtml = blocksToHtml(blocks, opts);
 
     // TOC

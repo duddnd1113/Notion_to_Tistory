@@ -9,6 +9,13 @@ let selectedPageId = null;
 window.addEventListener('DOMContentLoaded', () => {
   const nt = localStorage.getItem('notionToken');
   if (nt) document.getElementById('notionToken').value = nt;
+
+  const cn = localStorage.getItem('cloudName');
+  const ck = localStorage.getItem('cloudApiKey');
+  const cs = localStorage.getItem('cloudApiSecret');
+  if (cn) document.getElementById('cloudName').value = cn;
+  if (ck) document.getElementById('cloudApiKey').value = ck;
+  if (cs) document.getElementById('cloudApiSecret').value = cs;
 });
 
 /* ── 토큰 저장 ── */
@@ -17,6 +24,16 @@ function saveKeys() {
   if (!nt) { alert('Notion 토큰을 입력해주세요.'); return; }
   localStorage.setItem('notionToken', nt);
   showToast('토큰이 저장되었습니다 ✓');
+}
+
+function saveCloudinary() {
+  const cn = document.getElementById('cloudName').value.trim();
+  const ck = document.getElementById('cloudApiKey').value.trim();
+  const cs = document.getElementById('cloudApiSecret').value.trim();
+  localStorage.setItem('cloudName', cn);
+  localStorage.setItem('cloudApiKey', ck);
+  localStorage.setItem('cloudApiSecret', cs);
+  showToast('Cloudinary 정보가 저장되었습니다 ✓');
 }
 
 function toggleVis(id) {
@@ -90,6 +107,15 @@ async function convertPage() {
   setStatus('convertStatus', '페이지를 불러오는 중...', 'loading');
 
   try {
+    const cloudName   = localStorage.getItem('cloudName') || '';
+    const cloudApiKey = localStorage.getItem('cloudApiKey') || '';
+    const cloudApiSecret = localStorage.getItem('cloudApiSecret') || '';
+    const cloudinary = (cloudName && cloudApiKey && cloudApiSecret)
+      ? { cloudName, apiKey: cloudApiKey, apiSecret: cloudApiSecret }
+      : null;
+
+    if (cloudinary) setStatus('convertStatus', '페이지를 불러오는 중... (이미지 업로드 포함)', 'loading');
+
     const res = await fetch('/api/convert', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-notion-token': token },
@@ -101,6 +127,7 @@ async function convertPage() {
           meta:   document.getElementById('optMeta').checked,
           toc:    document.getElementById('optToc').checked,
         },
+        cloudinary,
       }),
     });
 
